@@ -48,7 +48,7 @@ func serveFile() httprouter.Handle {
 					return
 				}
 			}
-			jsonFileDetails(w, fileInfo)
+			jsonFileDetails(w, fileLocationInDisk, fileInfo)
 			return
 		default:
 			r.URL.Path = fileReq
