@@ -41,6 +41,9 @@ func serveFile() httprouter.Handle {
 
 func uploadFile() httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		customFilename := r.PostFormValue("filename")
+		replaceFile := r.PostFormValue("replace") == "true"
+
 		fileReq := p.ByName("filepath")
 		uploadLocation := filepath.Join(UPLOADS_DIR, fileReq)
 
@@ -50,7 +53,13 @@ func uploadFile() httprouter.Handle {
 		}
 		defer fileUploaded.Close()
 
-		outputFilepath := filepath.Join(uploadLocation, fileUploadedHeader.Filename)
+		var outputFilepath string
+		if customFilename != "" {
+			fileExtension := filepath.Ext(fileUploadedHeader.Filename)
+			outputFilepath = filepath.Join(uploadLocation, fmt.Sprintf("%s%s", customFilename, fileExtension))
+		} else {
+			outputFilepath = filepath.Join(uploadLocation, fileUploadedHeader.Filename)
+		}
 
 		outputFileDir := filepath.Dir(outputFilepath)
 		err = os.MkdirAll(outputFileDir, os.ModePerm)
@@ -58,7 +67,9 @@ func uploadFile() httprouter.Handle {
 			jsonErrorResponse(w, fmt.Sprintf("Couldn't create output directory: %s", err), http.StatusInternalServerError)
 		}
 
-		outputFilepath = getProperAvailableFilepath(outputFilepath)
+		if !replaceFile {
+			outputFilepath = getProperAvailableFilepath(outputFilepath)
+		}
 		fileOut, err := os.OpenFile(outputFilepath, os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
 			jsonErrorResponse(w, fmt.Sprintf("Couldn't create output file: %s", err), http.StatusInternalServerError)
