@@ -1,12 +1,14 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -33,9 +35,26 @@ func serveFile() httprouter.Handle {
 			return
 		}
 
-		r.URL.Path = fileReq
-		fileServer := http.FileServer(http.Dir(UPLOADS_DIR))
-		fileServer.ServeHTTP(w, r)
+		switch viewMode := r.URL.Query().Get("view"); strings.ToLower(viewMode) {
+		case "detail":
+			fileLocationInDisk := filepath.Join(UPLOADS_DIR, fileReq)
+			fileInfo, err := os.Stat(fileLocationInDisk)
+			if err != nil {
+				if errors.Is(err, os.ErrNotExist) {
+					jsonFileNotFound(w)
+					return
+				} else {
+					jsonErrorResponse(w, fmt.Sprintf("Internal server error: %s", err), http.StatusInternalServerError)
+					return
+				}
+			}
+			jsonFileDetails(w, fileInfo)
+			return
+		default:
+			r.URL.Path = fileReq
+			fileServer := http.FileServer(http.Dir(UPLOADS_DIR))
+			fileServer.ServeHTTP(w, r)
+		}
 	}
 }
 
@@ -50,6 +69,7 @@ func uploadFile() httprouter.Handle {
 		fileUploaded, fileUploadedHeader, err := r.FormFile("file")
 		if err != nil {
 			jsonErrorResponse(w, fmt.Sprintf("Couldn't parse file from the request: %s", err), http.StatusInternalServerError)
+			return
 		}
 		defer fileUploaded.Close()
 
@@ -65,6 +85,7 @@ func uploadFile() httprouter.Handle {
 		err = os.MkdirAll(outputFileDir, os.ModePerm)
 		if err != nil {
 			jsonErrorResponse(w, fmt.Sprintf("Couldn't create output directory: %s", err), http.StatusInternalServerError)
+			return
 		}
 
 		if !replaceFile {
@@ -73,12 +94,14 @@ func uploadFile() httprouter.Handle {
 		fileOut, err := os.OpenFile(outputFilepath, os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
 			jsonErrorResponse(w, fmt.Sprintf("Couldn't create output file: %s", err), http.StatusInternalServerError)
+			return
 		}
 		io.Copy(fileOut, fileUploaded)
 
 		downloadUrl, err := filepathToDownloadUrl(outputFilepath)
 		if err != nil {
 			jsonErrorResponse(w, fmt.Sprintf("Couldn't generate download link: %s", err), http.StatusInternalServerError)
+			return
 		}
 
 		jsonFileCreatedResponse(w, downloadUrl)
