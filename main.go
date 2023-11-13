@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -62,6 +63,7 @@ func uploadFile() httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		customFilename := r.PostFormValue("filename")
 		replaceFile := r.PostFormValue("replace") == "true"
+		disableFileOptimization := r.PostFormValue("disable-file-optimization") == "true"
 
 		fileReq := p.ByName("filepath")
 		uploadLocation := filepath.Join(UPLOADS_DIR, fileReq)
@@ -91,12 +93,23 @@ func uploadFile() httprouter.Handle {
 		if !replaceFile {
 			outputFilepath = getProperAvailableFilepath(outputFilepath)
 		}
+
+		uploadedBuffer := bytes.NewBuffer(nil)
+		if _, err := io.Copy(uploadedBuffer, fileUploaded); err != nil {
+			jsonErrorResponse(w, fmt.Sprintf("Internal server error: %s", err), http.StatusInternalServerError)
+			return
+		}
+
+		if !disableFileOptimization {
+			optimizeFile(&outputFilepath, uploadedBuffer)
+		}
+
 		fileOut, err := os.OpenFile(outputFilepath, os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
 			jsonErrorResponse(w, fmt.Sprintf("Couldn't create output file: %s", err), http.StatusInternalServerError)
 			return
 		}
-		io.Copy(fileOut, fileUploaded)
+		io.Copy(fileOut, uploadedBuffer)
 
 		downloadUrl, err := filepathToDownloadUrl(outputFilepath)
 		if err != nil {

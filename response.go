@@ -48,14 +48,6 @@ func jsonFileNotFound(w http.ResponseWriter) {
 	json.NewEncoder(w).Encode(p)
 }
 
-func jsonInternalServerError(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusInternalServerError)
-
-	p := errorJson{Message: "Internal "}
-	json.NewEncoder(w).Encode(p)
-}
-
 func jsonFileDetails(w http.ResponseWriter, path string, fileInfo fs.FileInfo) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
