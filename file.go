@@ -11,6 +11,8 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/kolesa-team/go-webp/encoder"
 	"github.com/kolesa-team/go-webp/webp"
+	"golang.org/x/image/bmp"
+	"golang.org/x/image/tiff"
 )
 
 func optimizeFile(outputFilepath *string, fileBytes *bytes.Buffer) {
@@ -30,6 +32,10 @@ func optimizeFile(outputFilepath *string, fileBytes *bytes.Buffer) {
 			img, err = jpeg.Decode(fileBytes)
 		case strings.HasSuffix(mtypeString, "png"):
 			img, err = png.Decode(fileBytes)
+		case strings.HasSuffix(mtypeString, "bmp"):
+			img, err = bmp.Decode(fileBytes)
+		case strings.HasSuffix(mtypeString, "tiff"):
+			img, err = tiff.Decode(fileBytes)
 		default:
 			return // Unsupported image format
 		}
