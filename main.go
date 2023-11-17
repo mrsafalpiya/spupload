@@ -92,10 +92,6 @@ func uploadFile() httprouter.Handle {
 			return
 		}
 
-		if !replaceFile {
-			outputFilepath = getProperAvailableFilepath(outputFilepath)
-		}
-
 		uploadedBuffer := bytes.NewBuffer(nil)
 		if _, err := io.Copy(uploadedBuffer, fileUploaded); err != nil {
 			jsonErrorResponse(w, fmt.Sprintf("Internal server error: %s", err), http.StatusInternalServerError)
@@ -104,6 +100,10 @@ func uploadFile() httprouter.Handle {
 
 		if !disableFileOptimization {
 			optimizeFile(&outputFilepath, uploadedBuffer)
+		}
+
+		if !replaceFile {
+			outputFilepath = getProperAvailableFilepath(outputFilepath)
 		}
 
 		fileOut, err := os.OpenFile(outputFilepath, os.O_WRONLY|os.O_CREATE, 0666)
