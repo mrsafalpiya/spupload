@@ -9,4 +9,7 @@ require (
 	golang.org/x/image v0.14.0
 )
 
-require golang.org/x/net v0.17.0 // indirect
+require (
+	github.com/rs/cors v1.10.1 // indirect
+	golang.org/x/net v0.17.0 // indirect
+)

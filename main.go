@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/rs/cors"
 )
 
 const HOST = "http://localhost"
@@ -23,7 +24,8 @@ func main() {
 	router.GET("/*filepath", serveFile())
 	router.POST("/*filepath", uploadFile())
 
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", PORT), router))
+	handler := cors.Default().Handler(router)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", PORT), handler))
 }
 
 func serveFile() httprouter.Handle {
