@@ -16,7 +16,7 @@ import (
 )
 
 const HOST = "http://localhost"
-const PORT = 5555
+const PORT = 5432
 const UPLOADS_DIR = "/home/safal/uploads"
 
 func main() {
