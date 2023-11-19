@@ -9,15 +9,43 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
+	"github.com/joho/godotenv"
 	"github.com/julienschmidt/httprouter"
 	"github.com/rs/cors"
 )
 
-const HOST = "http://localhost"
-const PORT = 5432
-const UPLOADS_DIR = "/home/safal/uploads"
+var HOST string
+var PORT int64
+var UPLOADS_DIR string
+
+func init() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("[ERROR] Couldn't load the .env file: %s", err)
+	}
+
+	HOST = os.Getenv("HOST")
+	if HOST == "" {
+		log.Fatal("[ERROR] The environment variable 'HOST' is not set")
+	}
+
+	portStr := os.Getenv("PORT")
+	if HOST == "" {
+		log.Fatal("[ERROR] The environment variable 'PORT' is not set")
+	}
+	PORT, err = strconv.ParseInt(portStr, 10, 32)
+	if portStr == "" || err != nil {
+		log.Fatal("[ERROR] The environment variable 'PORT' is not a number")
+	}
+
+	UPLOADS_DIR = os.Getenv("UPLOADS_DIR")
+	if UPLOADS_DIR == "" {
+		log.Fatal("[ERROR] The environment variable 'UPLOADS_DIR' is not set")
+	}
+}
 
 func main() {
 	router := httprouter.New()
@@ -25,6 +53,7 @@ func main() {
 	router.POST("/*filepath", uploadFile())
 
 	handler := cors.Default().Handler(router)
+	log.Printf("Listening on port %d\n", PORT)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", PORT), handler))
 }
 
