@@ -20,6 +20,7 @@ import (
 var HOST string
 var PORT int64
 var UPLOADS_DIR string
+var API_KEY string
 
 func init() {
 	err := godotenv.Load()
@@ -44,6 +45,11 @@ func init() {
 	UPLOADS_DIR = os.Getenv("UPLOADS_DIR")
 	if UPLOADS_DIR == "" {
 		log.Fatal("[ERROR] The environment variable 'UPLOADS_DIR' is not set")
+	}
+
+	API_KEY = os.Getenv("API_KEY")
+	if API_KEY == "" {
+		log.Fatal("[ERROR] The environment variable 'API_KEY' is not set")
 	}
 }
 
@@ -92,6 +98,12 @@ func serveFile() httprouter.Handle {
 
 func uploadFile() httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		headerAPIKey := r.Header.Get("x-spupload-api-key")
+		if headerAPIKey != API_KEY {
+			jsonErrorResponse(w, fmt.Sprintf("Invalid 'x-spupload-api-key' header value"), http.StatusBadRequest)
+			return
+		}
+
 		customFilename := r.PostFormValue("filename")
 		replaceFile := r.PostFormValue("replace") == "true"
 		disableFileOptimization := r.PostFormValue("disable-file-optimization") == "true"
