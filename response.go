@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/fs"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gabriel-vasile/mimetype"
@@ -14,7 +15,8 @@ type errorJson struct {
 }
 
 type fileCreatedJson struct {
-	Url string `json:"url"`
+	Url      string `json:"url"`
+	Relative string `json:"relative"`
 }
 
 type fileDetailsJson struct {
@@ -36,7 +38,7 @@ func jsonFileCreatedResponse(w http.ResponseWriter, url string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	p := fileCreatedJson{url}
+	p := fileCreatedJson{url, strings.TrimPrefix(url, getFullHostname())}
 	json.NewEncoder(w).Encode(p)
 }
 
