@@ -1,6 +1,6 @@
-FROM golang:1.21.4-bookworm
+FROM golang:alpine
 
-RUN apt-get update && apt-get install -y libwebp-dev
+RUN apk add --no-cache build-base libwebp-dev
 
 # Set the Current Working Directory inside the container
 WORKDIR /app/spupload
