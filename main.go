@@ -30,16 +30,16 @@ func init() {
 
 	HOST = os.Getenv("HOST")
 	if HOST == "" {
-		log.Fatal("[ERROR] The environment variable 'HOST' is not set")
+		log.Println("[WARNING] The environment variable 'HOST' is not set - The full URL of uploaded response will be invalid")
 	}
 
 	portStr := os.Getenv("PORT")
-	if HOST == "" {
-		log.Fatal("[ERROR] The environment variable 'PORT' is not set")
+	if portStr == "" {
+		log.Println("[WARNING] The environment variable 'PORT' is not set - The full URL of uploaded response will be invalid")
 	}
 	PORT, err = strconv.ParseInt(portStr, 10, 32)
 	if portStr == "" || err != nil {
-		log.Fatal("[ERROR] The environment variable 'PORT' is not a number")
+		log.Println("[WARNING] The environment variable 'PORT' is not a number")
 	}
 
 	UPLOADS_DIR = os.Getenv("UPLOADS_DIR")
